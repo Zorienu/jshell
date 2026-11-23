@@ -2,17 +2,43 @@
 #include <stdlib.h>
 #include <string.h>
 
-char read_line(void) {
+#define JSHELL_RL_BUFF_SIZE 1024
+char *read_line(void) {
+  int buff_size = JSHELL_RL_BUFF_SIZE;
+  char *buffer = malloc(buff_size * sizeof(char));
+  int idx = 0;
 
+  if (!buffer) {
+    fprintf(stderr, "jshell: allocation error\n");
+    exit(EXIT_FAILURE);
+  }
+
+  while (true) {
+    char c = getchar();
+
+    if (c == EOF || c == '\n') {
+      buffer[idx] = '\0';
+      return buffer;
+    }
+
+    buffer[idx++] = c;
+
+    if (idx >= buff_size) {
+      buff_size += JSHELL_RL_BUFF_SIZE;
+      buffer = realloc(buffer, buff_size);
+
+      if (!buffer) {
+        fprintf(stderr, "jshell: allocation error\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
 }
 
 void loop(void) {
-  char buffer[100];
-
   printf("> ");
-  if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
-    printf("You entered: %s\n", buffer);
-  }
+  char *buffer = read_line();
+  printf("Buffer: %s\n", buffer);
 
   char *args[100];
   int arg_idx = 0;
@@ -20,7 +46,7 @@ void loop(void) {
   int start_arg_idx = 0;
 
   for (int i = 0; i < 100; i++) {
-    if (buffer[i] != ' ' && buffer[i] != '\n')
+    if (buffer[i] != ' ' && buffer[i] != '\0')
       continue;
 
     int bytes = (i - start_arg_idx) * sizeof(char);
@@ -29,7 +55,7 @@ void loop(void) {
     start_arg_idx = i + 1;
     arg_idx++;
 
-    if (buffer[i] == '\n')
+    if (buffer[i] == '\0')
       break;
   }
 
