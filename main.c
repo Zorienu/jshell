@@ -102,12 +102,16 @@ int launch(char **args) {
 }
 
 void loop(void) {
-  printf("> ");
-  char *buffer = read_line();
+  int status;
 
-  char **args = split_line(buffer);
+  do {
+    printf("> ");
+    char *buffer = read_line();
 
-  launch(args);
+    char **args = split_line(buffer);
+
+    status = launch(args);
+  } while (status);
 }
 
 int main(int argc, char **argv) {
