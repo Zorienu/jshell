@@ -14,7 +14,8 @@ char *read_line(void) {
   }
 
   while (true) {
-    char c = getchar();
+    // Declared as an int instaed of a char because EOF is an integer
+    int c = getchar();
 
     if (c == EOF || c == '\n') {
       buffer[idx] = '\0';
