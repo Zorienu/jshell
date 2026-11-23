@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #define JSHELL_RL_BUFF_SIZE 1024
 char *read_line(void) {
@@ -77,18 +79,35 @@ char **split_line(char *line) {
   return args;
 }
 
+int launch(char **args) {
+  pid_t pid;
+
+  pid = fork();
+  if (pid == 0) {
+    // Child process
+    if (execvp(args[0], args) == -1) {
+      perror("jshell");
+    }
+    exit(EXIT_FAILURE);
+  } else if (pid < 0) {
+    // Error forking
+    perror("jshell");
+  } else {
+    // Parent process
+    int status;
+    wait(&status);
+  }
+
+  return 1;
+}
+
 void loop(void) {
   printf("> ");
   char *buffer = read_line();
-  printf("Buffer: %s\n", buffer);
 
   char **args = split_line(buffer);
 
-  for (int i = 0; i < 100; i++) {
-    if (args[i] == NULL)
-      break;
-    printf("arg[%i]: %s\n", i, args[i]);
-  }
+  launch(args);
 }
 
 int main(int argc, char **argv) {
