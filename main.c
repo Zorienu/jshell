@@ -36,31 +36,57 @@ char *read_line(void) {
   }
 }
 
+#define JSHELL_SL_BUFF_SIZE 64
+char **split_line(char *line) {
+  int buff_size = JSHELL_SL_BUFF_SIZE;
+  char **args = malloc(sizeof(char *) * buff_size);
+  int arg_idx = 0;
+  int start_arg_idx = 0;
+
+  if (args == NULL) {
+    fprintf(stderr, "jshell: allocation error\n");
+    exit(EXIT_FAILURE);
+  }
+
+  for (int i = 0; i < buff_size; i++) {
+    if (line[i] != ' ' && line[i] != '\0')
+      continue;
+
+    int bytes = (i - start_arg_idx) * sizeof(char);
+    args[arg_idx] = malloc(bytes);
+    memcpy(args[arg_idx], &line[start_arg_idx], bytes);
+    start_arg_idx = i + 1;
+    arg_idx++;
+
+    if (arg_idx >= buff_size) {
+      buff_size += JSHELL_SL_BUFF_SIZE;
+      args = realloc(args, buff_size);
+
+      if (args == NULL) {
+        fprintf(stderr, "jshell: allocation error\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    if (line[i] == '\0') {
+      args[arg_idx] = NULL;
+      break;
+    }
+  }
+
+  return args;
+}
+
 void loop(void) {
   printf("> ");
   char *buffer = read_line();
   printf("Buffer: %s\n", buffer);
 
-  char *args[100];
-  int arg_idx = 0;
-  char arg_buffer[100];
-  int start_arg_idx = 0;
+  char **args = split_line(buffer);
 
   for (int i = 0; i < 100; i++) {
-    if (buffer[i] != ' ' && buffer[i] != '\0')
-      continue;
-
-    int bytes = (i - start_arg_idx) * sizeof(char);
-    args[arg_idx] = malloc(bytes);
-    memcpy(args[arg_idx], &buffer[start_arg_idx], bytes);
-    start_arg_idx = i + 1;
-    arg_idx++;
-
-    if (buffer[i] == '\0')
+    if (args[i] == NULL)
       break;
-  }
-
-  for (int i = 0; i < arg_idx; i++) {
     printf("arg[%i]: %s\n", i, args[i]);
   }
 }
